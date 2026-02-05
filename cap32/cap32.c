@@ -1296,7 +1296,7 @@ int cart_start (char *pchFileName) {
       return result;
    }
 
-   sprintf(cart_name,"%s",pchFileName);
+   snprintf(cart_name, RETRO_PATH_MAX, "%s", pchFileName);
 
    /* Restart emulator if initiated */
    if(emu_status & COMPUTER_READY) {
@@ -1687,7 +1687,7 @@ void loadConfiguration (void)
    CPC.snd_stereo = getConfigValueInt(chFileName, "sound", "stereo", 1) & 1;
    CPC.snd_volume = getConfigValueInt(chFileName, "sound", "volume", 80);
 
-   if ((CPC.snd_volume < 0) || (CPC.snd_volume > 100))
+   if (CPC.snd_volume > 100)
       CPC.snd_volume = 80;
    CPC.snd_pp_device = getConfigValueInt(chFileName, "sound", "pp_device", 0) & 1;
 
@@ -1697,6 +1697,7 @@ void loadConfiguration (void)
 
    CPC.max_tracksize = getConfigValueInt(chFileName, "file", "max_track_size", 6144-154);
    strncpy(chPath, chAppPath, sizeof(chPath)-7);
+   chPath[sizeof(chPath)-7] = '\0';
    strcat(chPath, "/snap");
    getConfigValueString(chFileName, "file", "snap_path", CPC.snap_path, sizeof(CPC.snap_path)-1, chPath);
    if (CPC.snap_path[0] == '\0') {
@@ -1705,6 +1706,7 @@ void loadConfiguration (void)
    getConfigValueString(chFileName, "file", "snap_file", CPC.snap_file, sizeof(CPC.snap_file)-1, "");
    CPC.snap_zip = getConfigValueInt(chFileName, "file", "snap_zip", 0) & 1;
    strncpy(chPath, chAppPath, sizeof(chPath)-7);
+   chPath[sizeof(chPath)-7] = '\0';
    strcat(chPath, "/disk");
    getConfigValueString(chFileName, "file", "drvA_path", CPC.drvA_path, sizeof(CPC.drvA_path)-1, chPath);
    if (CPC.drvA_path[0] == '\0') {
@@ -1721,6 +1723,7 @@ void loadConfiguration (void)
    CPC.drvB_zip = getConfigValueInt(chFileName, "file", "drvB_zip", 0) & 1;
    CPC.drvB_format = getConfigValueInt(chFileName, "file", "drvB_format", DEFAULT_DISK_FORMAT);
    strncpy(chPath, chAppPath, sizeof(chPath)-7);
+   chPath[sizeof(chPath)-7] = '\0';
    strcat(chPath, "/tape");
    getConfigValueString(chFileName, "file", "tape_path", CPC.tape_path, sizeof(CPC.tape_path)-1, chPath);
    if (CPC.tape_path[0] == '\0') {

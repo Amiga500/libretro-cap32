@@ -52,8 +52,8 @@ bool _loader_launch(char * key_buffer, char * filename)
    if (game_configuration.is_cpm)
    {
       // CPM ROM boot do not need >RUN< prefix
-      if(strncpy(key_buffer, filename, LOADER_MAX_SIZE) < 0)
-         return false;
+      strncpy(key_buffer, filename, LOADER_MAX_SIZE - 1);
+      key_buffer[LOADER_MAX_SIZE - 1] = '\0';
    }
    else if(snprintf(key_buffer, LOADER_MAX_SIZE, "RUN\"%s", filename) < 0)
    {
