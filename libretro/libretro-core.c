@@ -1288,7 +1288,7 @@ void computer_autoload()
    if (game_configuration.has_command)
    {
       strncpy(loader_buffer, game_configuration.loader_command, LOADER_MAX_SIZE - 2);
-      loader_buffer[LOADER_MAX_SIZE - 2] = '\0';
+      loader_buffer[LOADER_MAX_SIZE - 3] = '\0';
    } else {
       loader_run(loader_buffer);
    }
