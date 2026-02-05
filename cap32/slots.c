@@ -68,6 +68,9 @@ uint8_t *pbSnaImage = NULL;
 int cpm_boot (char * comfile)
 {
    uint8_t* cpmROM = (uint8_t *)malloc(CPM_SIZE);
+   if (cpmROM == NULL) {
+      return ERR_OUT_OF_MEMORY;
+   }
 
    if (strlen(comfile) > 4 && comfile[strlen(comfile)-5] == '.')
    {

@@ -518,7 +518,8 @@ extern uint8_t keyboard_matrix[16];
 static int wait_loop=0;
 
 void kbd_buf_feed(char *s) {
-   strcpy(kbd_feedbuf, s);
+   strncpy(kbd_feedbuf, s, sizeof(kbd_feedbuf) - 1);
+   kbd_feedbuf[sizeof(kbd_feedbuf) - 1] = '\0';
    kbd_feedbuf_pos = 0;
    old = 0;
    wait_loop = LOOPS_TO_WAIT;

@@ -108,7 +108,8 @@ int test_dsk_hashed(char * file_path, char * result_string, uint32_t file_hash)
    // get database info
    db_info(hash);
    if (game_configuration.has_command) {
-      strncpy(loader_buffer, game_configuration.loader_command, LOADER_MAX_SIZE);
+      strncpy(loader_buffer, game_configuration.loader_command, LOADER_MAX_SIZE - 1);
+      loader_buffer[LOADER_MAX_SIZE - 1] = '\0';
    } else {
       test_loader(&drive, "", loader_buffer);
    }

@@ -288,8 +288,9 @@ void parse_cmdline(const char *argv)
    static char buffer[512*4];
    enum states { DULL, IN_WORD, IN_STRING } state = DULL;
 
-   strcpy(buffer,argv);
-   strcat(buffer," \0");
+   strncpy(buffer, argv, sizeof(buffer) - 2);
+   buffer[sizeof(buffer) - 2] = '\0';
+   strcat(buffer, " ");
 
    for (p = buffer; *p != '\0'; p++)
    {
@@ -1286,7 +1287,8 @@ void computer_autoload()
 
    if (game_configuration.has_command)
    {
-      strncpy(loader_buffer, game_configuration.loader_command, LOADER_MAX_SIZE);
+      strncpy(loader_buffer, game_configuration.loader_command, LOADER_MAX_SIZE - 2);
+      loader_buffer[LOADER_MAX_SIZE - 2] = '\0';
    } else {
       loader_run(loader_buffer);
    }
