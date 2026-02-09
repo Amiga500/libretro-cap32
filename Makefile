@@ -374,7 +374,7 @@ else ifeq ($(platform), retrofw)
 	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
 	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
 	
-#MIYOO
+#MIYOO (original Miyoo - ARMv5)
 else ifeq ($(platform), miyoo)
 	TARGET := $(TARGET_NAME)_libretro.so
    	CC = /opt/miyoo/usr/bin/arm-linux-gcc
@@ -389,6 +389,29 @@ else ifeq ($(platform), miyoo)
 	CFLAGS += -fomit-frame-pointer -ffast-math	
 	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
 	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
+
+# Miyoo Mini Plus (Cortex-A7 with NEON - Optimized for OnionOS)
+else ifeq ($(platform), miyoomini)
+	TARGET := $(TARGET_NAME)_libretro.so
+	CC ?= arm-linux-gnueabihf-gcc
+	CC_AS ?= arm-linux-gnueabihf-as
+	CXX ?= arm-linux-gnueabihf-g++
+	AR ?= arm-linux-gnueabihf-ar
+	fpic := -fPIC
+	SHARED := -shared -Wl,-version-script=link.T -Wl,-no-undefined
+	# Force 8bpp mode, LOWRES (320x240), and enable aggressive optimizations
+	CFLAGS := -DFRONTEND_SUPPORTS_RGB565 -DLOWRES -DINLINE="inline" -DM8BPP -DMIYOO_MINI_PLUS
+	# Cortex-A7 with NEON optimizations
+	CFLAGS += -march=armv7-a -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
+	LDFLAGS += -march=armv7-a -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
+	# Aggressive optimization flags
+	CFLAGS += -O3 -flto -fomit-frame-pointer -ffast-math -fno-strict-aliasing
+	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
+	CFLAGS += -falign-functions=1 -falign-jumps=1 -falign-loops=1
+	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
+	CFLAGS += -fmerge-all-constants -fno-math-errno -fno-stack-protector
+	CFLAGS += -fdata-sections -ffunction-sections
+	LDFLAGS += -Wl,--gc-sections -flto
 
 # emscripten
 else ifeq ($(platform), emscripten)

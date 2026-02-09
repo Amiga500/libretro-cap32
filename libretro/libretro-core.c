@@ -500,7 +500,11 @@ static struct retro_core_option_v2_definition option_definitions[] = {
          { "6128+ (experimental)", NULL },
          { NULL, NULL },
       },
+#if defined(LOWRES) || defined(MIYOO_MINI_PLUS)
+      "464"  // Use lighter 464 model by default on low-power ARM devices
+#else
       "6128"
+#endif
    },
    // rcheevos disallowed_setting: cap32_autorun disabled
    {
@@ -612,7 +616,11 @@ static struct retro_core_option_v2_definition option_definitions[] = {
          { "disabled", NULL },
          { NULL, NULL },
       },
+#if defined(LOWRES) || defined(MIYOO_MINI_PLUS)
+      "enabled"  // Enable crop by default on low-power ARM devices
+#else
       "disabled"
+#endif
    },
    {
       "cap32_statusbar",
@@ -628,6 +636,27 @@ static struct retro_core_option_v2_definition option_definitions[] = {
          { NULL, NULL },
       },
       "onloading"
+   },
+   {
+      "cap32_frameskip",
+      "Frameskip",
+      NULL,
+      "Skip frames to improve performance on low-end hardware. Auto skips frames when needed.",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "auto",     NULL },
+         { "1",        NULL },
+         { "2",        NULL },
+         { "3",        NULL },
+         { NULL, NULL },
+      },
+#if defined(LOWRES) || defined(MIYOO_MINI_PLUS)
+      "auto"  // Enable auto frameskip by default on low-power ARM devices
+#else
+      "disabled"
+#endif
    },
    {
       "cap32_keyboard_transparency",
@@ -958,6 +987,19 @@ static void update_variables(void)
           retro_computer_cfg.floppy_snd = 0;
       else
          retro_computer_cfg.floppy_snd = 1;
+   }
+
+   var.key = "cap32_frameskip";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         retro_computer_cfg.frameskip = 0;
+      else if (strcmp(var.value, "auto") == 0)
+         retro_computer_cfg.frameskip = -1;
+      else
+         retro_computer_cfg.frameskip = atoi(var.value);
    }
 
    var.key = "cap32_statusbar";
@@ -1540,6 +1582,9 @@ void retro_init(void)
    retro_computer_cfg.padcfg[ID_PLAYER2] = 1;
    retro_computer_cfg.statusbar = STATUSBAR_HIDE;
    retro_computer_cfg.use_internal_remap = false;
+   retro_computer_cfg.frameskip = 0;
+   retro_computer_cfg.frameskip_counter = 0;
+   retro_computer_cfg.frameskip_threshold = 0;
 
    update_variables();
 
@@ -1731,6 +1776,25 @@ void retro_run(void)
       retro_message("Options updated, changes applied!");
    }
 
+   // Frameskip logic
+   bool should_skip = false;
+   if (retro_computer_cfg.frameskip > 0)
+   {
+      // Fixed frameskip
+      retro_computer_cfg.frameskip_counter++;
+      if (retro_computer_cfg.frameskip_counter <= retro_computer_cfg.frameskip)
+         should_skip = true;
+      else
+         retro_computer_cfg.frameskip_counter = 0;
+   }
+   else if (retro_computer_cfg.frameskip < 0)
+   {
+      // Auto frameskip - skip every other frame initially
+      retro_computer_cfg.frameskip_counter++;
+      if (retro_computer_cfg.frameskip_counter % 2 == 0)
+         should_skip = true;
+   }
+
    retro_loop();
 
    retro_PollEvent();
@@ -1739,7 +1803,9 @@ void retro_run(void)
    if (lightgun_cfg.gun_draw)
       lightgun_cfg.gun_draw();
 
-   screen_draw();
+   // Only render frame if not skipping
+   if (!should_skip)
+      screen_draw();
 }
 
 bool retro_load_game(const struct retro_game_info *game)
