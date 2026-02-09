@@ -50,6 +50,11 @@ SOURCES_C := \
 	$(CORE_DIR)/libretro/retro_gun.c \
 	$(CORE_DIR)/libretro/retro_keyboard.c
 
+# Add NEON optimized version for ARM platforms with NEON support
+ifeq ($(HAVE_NEON),1)
+SOURCES_C += $(CORE_DIR)/libretro/gfx/video8bpp_neon.c
+endif
+
 ifneq ($(STATIC_LINKING), 1)
 SOURCES_C += \
 	$(LIBRETRO_COMM_DIR)/file/file_path.c \

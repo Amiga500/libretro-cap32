@@ -85,9 +85,11 @@ else ifneq (,$(findstring rpi,$(platform)))
 	else ifneq (,$(findstring rpi2,$(platform)))
 		CFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
 		LDFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
+		HAVE_NEON = 1
 	else ifneq (,$(findstring rpi3,$(platform)))
 		CFLAGS += -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
 		LDFLAGS += -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+		HAVE_NEON = 1
 	endif
 # evercade armv7
 else ifneq (,$(findstring evercade,$(platform)))
@@ -114,6 +116,7 @@ else ifeq ($(platform), rg35xx)
 
 	CFLAGS := -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DLOWRES 
 	CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard
+	HAVE_NEON = 1
 
 	CFLAGS += -flto=4 -fwhole-program -fuse-linker-plugin \
 		-fdata-sections -ffunction-sections -Wl,--gc-sections \
@@ -374,7 +377,7 @@ else ifeq ($(platform), retrofw)
 	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
 	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
 	
-#MIYOO
+#MIYOO (original Miyoo - ARMv5)
 else ifeq ($(platform), miyoo)
 	TARGET := $(TARGET_NAME)_libretro.so
    	CC = /opt/miyoo/usr/bin/arm-linux-gcc
@@ -389,6 +392,39 @@ else ifeq ($(platform), miyoo)
 	CFLAGS += -fomit-frame-pointer -ffast-math	
 	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
 	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
+
+# Miyoo Mini Plus (Cortex-A7 with NEON - Optimized for OnionOS)
+else ifeq ($(platform), miyoomini)
+	TARGET := $(TARGET_NAME)_libretro.so
+	# Use absolute path if toolchain exists, otherwise rely on PATH
+	TOOLCHAIN_PATH := /opt/miyoomini-toolchain/bin
+	ifneq ($(wildcard $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-gcc),)
+		CC := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-gcc
+		CC_AS := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-as
+		CXX := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-g++
+		AR := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-ar
+	else
+		CC := arm-linux-gnueabihf-gcc
+		CC_AS := arm-linux-gnueabihf-as
+		CXX := arm-linux-gnueabihf-g++
+		AR := arm-linux-gnueabihf-ar
+	endif
+	fpic := -fPIC
+	SHARED := -shared -Wl,-version-script=link.T -Wl,-no-undefined
+	# Force 8bpp mode, LOWRES (320x240), and enable aggressive optimizations
+	CFLAGS := -DFRONTEND_SUPPORTS_RGB565 -DLOWRES -DINLINE="inline" -DM8BPP -DMIYOO_MINI_PLUS
+	# Cortex-A7 with NEON optimizations
+	CFLAGS += -march=armv7-a -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
+	LDFLAGS += -march=armv7-a -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
+	HAVE_NEON = 1
+	# Aggressive optimization flags
+	CFLAGS += -O3 -flto -fomit-frame-pointer -ffast-math -fno-strict-aliasing
+	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
+	CFLAGS += -falign-functions=1 -falign-jumps=1 -falign-loops=1
+	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
+	CFLAGS += -fmerge-all-constants -fno-math-errno -fno-stack-protector
+	CFLAGS += -fdata-sections -ffunction-sections
+	LDFLAGS += -Wl,--gc-sections -flto
 
 # emscripten
 else ifeq ($(platform), emscripten)

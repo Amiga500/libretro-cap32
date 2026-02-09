@@ -172,6 +172,8 @@ typedef struct {
    bool floppy_snd;
    bool autorun;
    bool use_internal_remap;
+   int frameskip;  // 0=disabled, -1=auto, 1-3=fixed skip count
+   int frameskip_counter;  // Frame counter for frameskip logic
 } computer_cfg_t;
 extern computer_cfg_t retro_computer_cfg;
 
