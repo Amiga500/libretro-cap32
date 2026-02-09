@@ -135,6 +135,8 @@ Skee Shoot
 
 This core includes aggressive optimizations for ARM Cortex-A7 devices like the Miyoo Mini Plus running OnionOS, targeting 60 FPS performance.
 
+**🇮🇹 Per istruzioni in italiano, vedi [COMPILAZIONE_MIYOO.md](COMPILAZIONE_MIYOO.md) o [QUICK_START_IT.txt](QUICK_START_IT.txt)**
+
 ### Build for Miyoo Mini Plus
 
 ```bash
