@@ -85,9 +85,11 @@ else ifneq (,$(findstring rpi,$(platform)))
 	else ifneq (,$(findstring rpi2,$(platform)))
 		CFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
 		LDFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
+		HAVE_NEON = 1
 	else ifneq (,$(findstring rpi3,$(platform)))
 		CFLAGS += -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
 		LDFLAGS += -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+		HAVE_NEON = 1
 	endif
 # evercade armv7
 else ifneq (,$(findstring evercade,$(platform)))
@@ -114,6 +116,7 @@ else ifeq ($(platform), rg35xx)
 
 	CFLAGS := -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DLOWRES 
 	CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard
+	HAVE_NEON = 1
 
 	CFLAGS += -flto=4 -fwhole-program -fuse-linker-plugin \
 		-fdata-sections -ffunction-sections -Wl,--gc-sections \
@@ -404,6 +407,7 @@ else ifeq ($(platform), miyoomini)
 	# Cortex-A7 with NEON optimizations
 	CFLAGS += -march=armv7-a -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
 	LDFLAGS += -march=armv7-a -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm
+	HAVE_NEON = 1
 	# Aggressive optimization flags
 	CFLAGS += -O3 -flto -fomit-frame-pointer -ffast-math -fno-strict-aliasing
 	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations

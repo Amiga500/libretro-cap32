@@ -313,12 +313,23 @@ void draw_char_8bpp(uint32_t * dest, const unsigned char *font_data, unsigned in
 
 
 #ifndef RENDER_GSKIT_PS2
+
+// NEON optimized functions (defined in video8bpp_neon.c)
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+extern void screen_blit_full_8bpp_neon(uint32_t * video_buffer, uint32_t * dest_buffer, uint16_t _width, uint16_t _height);
+extern void screen_blit_crop_8bpp_neon(uint32_t * video_buffer, uint32_t * dest_buffer, uint16_t _width, uint16_t _height);
+#endif
+
 /**
  * screen_blit_full_8bpp:
  * crop a 8bpp screen to your dest render, optimized
  **/
  __attribute__((optimize("unroll-loops"))) void screen_blit_full_8bpp(uint32_t * video_buffer, uint32_t * dest_buffer, uint16_t _width, uint16_t _height)
 {
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+   // Use NEON optimized version if available
+   screen_blit_full_8bpp_neon(video_buffer, dest_buffer, _width, _height);
+#else
    uint8_t *src_row = (uint8_t *) video_buffer;
    uint16_t *dest_row = (uint16_t *) dest_buffer;
    int size = EMULATION_SCREEN_WIDTH * EMULATION_SCREEN_HEIGHT;
@@ -327,6 +338,7 @@ void draw_char_8bpp(uint32_t * dest, const unsigned char *font_data, unsigned in
    {
       *(dest_row++) = retro_palette[*(src_row++)];
    }
+#endif
 }
 
 /**
@@ -335,6 +347,10 @@ void draw_char_8bpp(uint32_t * dest, const unsigned char *font_data, unsigned in
  **/
 __attribute__((optimize("unroll-loops"))) void screen_blit_crop_8bpp(uint32_t * video_buffer, uint32_t * dest_buffer, uint16_t _width, uint16_t _height)
 {
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+   // Use NEON optimized version if available
+   screen_blit_crop_8bpp_neon(video_buffer, dest_buffer, _width, _height);
+#else
    int width;
    int x_max = EMULATION_SCREEN_WIDTH - (EMULATION_CROP * 2);
    int y_max = EMULATION_SCREEN_HEIGHT - (EMULATION_CROP / EMULATION_SCALE);
@@ -354,6 +370,7 @@ __attribute__((optimize("unroll-loops"))) void screen_blit_crop_8bpp(uint32_t * 
 
       src += EMULATION_CROP;
    }
+#endif
 }
 
 #else // RENDER_GSKIT_PS2
