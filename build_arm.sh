@@ -15,6 +15,22 @@ PLATFORM="${1:-miyoomini}"
 JOBS="${2:-4}"
 CORE_NAME="cap32_libretro.so"
 
+# Auto-detect and add miyoomini toolchain to PATH if building for miyoomini
+if [ "$PLATFORM" = "miyoomini" ]; then
+    if [ -d "/opt/miyoomini-toolchain/bin" ]; then
+        if ! echo "$PATH" | grep -q "/opt/miyoomini-toolchain/bin"; then
+            echo -e "${YELLOW}Adding Miyoo toolchain to PATH...${NC}"
+            export PATH="/opt/miyoomini-toolchain/bin:$PATH"
+        fi
+        # Verify toolchain is accessible
+        if ! command -v arm-linux-gnueabihf-gcc &> /dev/null; then
+            echo -e "${RED}Error: ARM toolchain not found in PATH after adding it${NC}"
+            echo -e "${YELLOW}Please ensure the toolchain is installed at /opt/miyoomini-toolchain/bin${NC}"
+            exit 1
+        fi
+    fi
+fi
+
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}libretro-cap32 ARM Optimization Build${NC}"
 echo -e "${GREEN}========================================${NC}"
@@ -25,6 +41,10 @@ case "$PLATFORM" in
     miyoomini)
         echo -e "${YELLOW}Platform:${NC} Miyoo Mini Plus (Cortex-A7 + NEON)"
         echo -e "${YELLOW}Optimizations:${NC} 8bpp, NEON SIMD, LTO, crop, frameskip"
+        if command -v arm-linux-gnueabihf-gcc &> /dev/null; then
+            COMPILER_PATH=$(which arm-linux-gnueabihf-gcc)
+            echo -e "${YELLOW}Compiler:${NC} $COMPILER_PATH"
+        fi
         ;;
     rpi2)
         echo -e "${YELLOW}Platform:${NC} Raspberry Pi 2 (Cortex-A7 + NEON)"

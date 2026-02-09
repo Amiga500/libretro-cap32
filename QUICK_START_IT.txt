@@ -6,6 +6,9 @@
 🚀 COMPILAZIONE VELOCE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+IMPORTANTE: Aggiungi prima il toolchain al PATH!
+  $ export PATH=/opt/miyoomini-toolchain/bin:$PATH
+
 METODO 1 - Script Automatico (Consigliato):
   $ ./build_arm.sh miyoomini
 
@@ -45,20 +48,23 @@ Menu Rapido → Opzioni:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Errore: "arm-linux-gnueabihf-gcc: command not found"
-→ Soluzione: Usa il nome completo del compilatore nel tuo toolchain
+→ Soluzione: Aggiungi toolchain al PATH
 
-  Trova il compilatore:
-    $ ls /opt/*/bin/*gcc* | head -5
-  
-  Compila specificando il compilatore:
-    $ make platform=miyoomini CC=arm-buildroot-linux-gnueabihf-gcc \
-           CXX=arm-buildroot-linux-gnueabihf-g++ \
-           AR=arm-buildroot-linux-gnueabihf-ar
+  $ export PATH=/opt/miyoomini-toolchain/bin:$PATH
+  $ make platform=miyoomini clean
+  $ make platform=miyoomini -j4
 
-Errore: "undefined reference to vld1_u8"
-→ Soluzione: Verifica flag NEON
-    $ make platform=miyoomini V=1 | grep mfpu
-    # Deve contenere: -mfpu=neon-vfpv4
+Errore: "cc: error: unrecognized command line option '-mfpu=neon-vfpv4'"
+→ Soluzione: Sta usando il compilatore sbagliato, unset variabili ambiente
+
+  $ unset CC CXX AR
+  $ export PATH=/opt/miyoomini-toolchain/bin:$PATH
+  $ make platform=miyoomini clean
+  $ make platform=miyoomini -j4
+
+Verifica toolchain:
+  $ ls /opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-gcc
+  $ which arm-linux-gnueabihf-gcc
 
 Core troppo grande (> 2MB)
 → Soluzione: Strip dei debug symbols

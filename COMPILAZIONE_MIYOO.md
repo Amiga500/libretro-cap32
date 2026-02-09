@@ -12,21 +12,40 @@ Assicurati di essere dentro il container Docker:
 # Verifica di essere nel container
 echo $TOOLCHAIN
 # Dovrebbe mostrare qualcosa tipo /opt/miyoomini-toolchain
+
+# Il toolchain dovrebbe essere in:
+ls /opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-gcc
 ```
 
 ---
 
 ## 🚀 Compilazione Rapida (Metodo Consigliato)
 
-### Opzione 1: Usando lo script automatico
+### Opzione 1: Usando lo script automatico con PATH configurato
 
 ```bash
+# Aggiungi il toolchain al PATH (importante!)
+export PATH=/opt/miyoomini-toolchain/bin:$PATH
+
 # Metodo più semplice - usa lo script build_arm.sh
 ./build_arm.sh miyoomini
 
 # Oppure con più core per compilazione più veloce
 ./build_arm.sh miyoomini 8
 ```
+
+### Opzione 2: Compilazione diretta (senza script)
+
+```bash
+# Aggiungi il toolchain al PATH
+export PATH=/opt/miyoomini-toolchain/bin:$PATH
+
+# Compila
+make platform=miyoomini clean
+make platform=miyoomini -j4
+```
+
+**NOTA IMPORTANTE**: Il Makefile ora rileva automaticamente il toolchain in `/opt/miyoomini-toolchain/bin/`. Se il toolchain è in un'altra posizione, aggiungi quella directory al PATH.
 
 Lo script farà automaticamente:
 1. Clean della build precedente
@@ -38,14 +57,30 @@ Lo script farà automaticamente:
 
 ## 🔧 Compilazione Manuale (Metodo Alternativo)
 
-Se preferisci compilare manualmente o lo script dà problemi:
+Se il toolchain è in una posizione diversa o vuoi specificare manualmente:
 
-### Passo 1: Clean (opzionale ma consigliato)
+### Passo 1: Configura il PATH o specifica il compilatore
+
+**Metodo A - Usa PATH (consigliato):**
+```bash
+export PATH=/opt/miyoomini-toolchain/bin:$PATH
+```
+
+**Metodo B - Specifica manualmente (solo se necessario):**
+```bash
+# Se il toolchain è in una posizione diversa
+export MIYOO_TOOLCHAIN=/percorso/al/toolchain/bin
+make platform=miyoomini CC=$MIYOO_TOOLCHAIN/arm-linux-gnueabihf-gcc \
+     CXX=$MIYOO_TOOLCHAIN/arm-linux-gnueabihf-g++ \
+     AR=$MIYOO_TOOLCHAIN/arm-linux-gnueabihf-ar
+```
+
+### Passo 2: Clean (opzionale ma consigliato)
 ```bash
 make platform=miyoomini clean
 ```
 
-### Passo 2: Compilazione
+### Passo 3: Compilazione
 ```bash
 # Compilazione standard (4 core)
 make platform=miyoomini -j4
@@ -57,7 +92,7 @@ make platform=miyoomini -j8
 make platform=miyoomini V=1
 ```
 
-### Passo 3: Verifica
+### Passo 4: Verifica
 ```bash
 # Verifica che il file sia stato creato
 ls -lh cap32_libretro.so
@@ -65,6 +100,9 @@ ls -lh cap32_libretro.so
 # Controlla che sia un binario ARM
 file cap32_libretro.so
 # Output atteso: "ELF 32-bit LSB shared object, ARM, EABI5..."
+
+# Controlla la dimensione (dovrebbe essere ~500KB-1MB dopo strip)
+du -h cap32_libretro.so
 ```
 
 ---
@@ -128,34 +166,67 @@ Una volta copiato il core, configura RetroArch per massime prestazioni:
 
 ### Errore: "arm-linux-gnueabihf-gcc: command not found"
 
-Il toolchain potrebbe non essere configurato correttamente. Verifica:
+Il toolchain potrebbe non essere nel PATH. Soluzione:
 
 ```bash
-# Controlla che il compilatore sia disponibile
-which arm-linux-gnueabihf-gcc
+# Verifica che il toolchain esista
+ls /opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-gcc
 
-# Se non lo trova, potrebbe servire configurare il PATH
+# Aggiungi al PATH
 export PATH=/opt/miyoomini-toolchain/bin:$PATH
 
-# Oppure usa i compilatori del container se hanno nomi diversi
-# Verifica quali compilatori ARM sono disponibili
-ls /opt/*/bin/*gcc* 2>/dev/null | head -5
+# Verifica che funzioni
+which arm-linux-gnueabihf-gcc
+# Dovrebbe mostrare: /opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-gcc
+
+# Ora compila
+make platform=miyoomini clean
+make platform=miyoomini -j4
 ```
 
-Se il toolchain usa nomi diversi (es. `arm-buildroot-linux-gnueabihf-gcc`), puoi:
+### Errore: "cc: error: unrecognized command line option '-mfpu=neon-vfpv4'"
 
-**Opzione A: Symlink**
+Questo errore significa che sta usando il compilatore di sistema (`cc` o `gcc`) invece del cross-compiler ARM. Soluzioni:
+
+**Soluzione 1 - Aggiungi toolchain al PATH (CONSIGLIATO):**
 ```bash
-cd /usr/local/bin
-ln -s /percorso/al/arm-buildroot-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc
-ln -s /percorso/al/arm-buildroot-linux-gnueabihf-g++ arm-linux-gnueabihf-g++
+export PATH=/opt/miyoomini-toolchain/bin:$PATH
+make platform=miyoomini clean
+make platform=miyoomini -j4
 ```
 
-**Opzione B: Specifica il compilatore**
+**Soluzione 2 - Unset variabili ambiente conflittuali:**
 ```bash
-make platform=miyoomini CC=arm-buildroot-linux-gnueabihf-gcc \
-     CXX=arm-buildroot-linux-gnueabihf-g++ \
-     AR=arm-buildroot-linux-gnueabihf-ar
+unset CC CXX AR
+export PATH=/opt/miyoomini-toolchain/bin:$PATH
+make platform=miyoomini clean
+make platform=miyoomini -j4
+```
+
+**Soluzione 3 - Usa percorso assoluto:**
+```bash
+make platform=miyoomini clean
+make platform=miyoomini -j4 \
+     CC=/opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-gcc \
+     CXX=/opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-g++ \
+     AR=/opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-ar
+```
+
+### Errore: "cc: warning: '-mcpu=' is deprecated"
+
+Se vedi questo warning ma la compilazione continua, è normale per alcune versioni di GCC. Non è un errore critico.
+
+### Il toolchain è in una posizione diversa
+
+Se il tuo toolchain non è in `/opt/miyoomini-toolchain/bin/`:
+
+```bash
+# Trova il compilatore
+find /opt /usr/local -name "arm-linux-gnueabihf-gcc" 2>/dev/null
+
+# Usa il percorso che trovi
+export PATH=/percorso/trovato/bin:$PATH
+make platform=miyoomini -j4
 ```
 
 ### Errore: "undefined reference to `vld1_u8'"

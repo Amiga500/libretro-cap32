@@ -396,10 +396,19 @@ else ifeq ($(platform), miyoo)
 # Miyoo Mini Plus (Cortex-A7 with NEON - Optimized for OnionOS)
 else ifeq ($(platform), miyoomini)
 	TARGET := $(TARGET_NAME)_libretro.so
-	CC ?= arm-linux-gnueabihf-gcc
-	CC_AS ?= arm-linux-gnueabihf-as
-	CXX ?= arm-linux-gnueabihf-g++
-	AR ?= arm-linux-gnueabihf-ar
+	# Use absolute path if toolchain exists, otherwise rely on PATH
+	TOOLCHAIN_PATH := /opt/miyoomini-toolchain/bin
+	ifneq ($(wildcard $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-gcc),)
+		CC := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-gcc
+		CC_AS := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-as
+		CXX := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-g++
+		AR := $(TOOLCHAIN_PATH)/arm-linux-gnueabihf-ar
+	else
+		CC := arm-linux-gnueabihf-gcc
+		CC_AS := arm-linux-gnueabihf-as
+		CXX := arm-linux-gnueabihf-g++
+		AR := arm-linux-gnueabihf-ar
+	endif
 	fpic := -fPIC
 	SHARED := -shared -Wl,-version-script=link.T -Wl,-no-undefined
 	# Force 8bpp mode, LOWRES (320x240), and enable aggressive optimizations
