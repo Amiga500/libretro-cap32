@@ -1584,7 +1584,6 @@ void retro_init(void)
    retro_computer_cfg.use_internal_remap = false;
    retro_computer_cfg.frameskip = 0;
    retro_computer_cfg.frameskip_counter = 0;
-   retro_computer_cfg.frameskip_threshold = 0;
 
    update_variables();
 
@@ -1780,19 +1779,19 @@ void retro_run(void)
    bool should_skip = false;
    if (retro_computer_cfg.frameskip > 0)
    {
-      // Fixed frameskip
+      // Fixed frameskip: skip N frames, then render 1
       retro_computer_cfg.frameskip_counter++;
-      if (retro_computer_cfg.frameskip_counter <= retro_computer_cfg.frameskip)
+      if (retro_computer_cfg.frameskip_counter < retro_computer_cfg.frameskip)
          should_skip = true;
       else
          retro_computer_cfg.frameskip_counter = 0;
    }
    else if (retro_computer_cfg.frameskip < 0)
    {
-      // Auto frameskip - skip every other frame initially
-      retro_computer_cfg.frameskip_counter++;
-      if (retro_computer_cfg.frameskip_counter % 2 == 0)
+      // Auto frameskip - skip every other frame (render on even frames: 0, 2, 4...)
+      if (retro_computer_cfg.frameskip_counter % 2 == 1)
          should_skip = true;
+      retro_computer_cfg.frameskip_counter++;
    }
 
    retro_loop();
